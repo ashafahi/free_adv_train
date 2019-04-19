@@ -1,4 +1,9 @@
-# free\_adv\_train
+# Free Adversarial Training 
+This repository belongs to the [Free Adversarial Training](http://arxiv.org/ "Free Adversarial Training") paper.
+The implementation is inspired by [CIFAR10 Adversarial Example Challenge](https://github.com/MadryLab/cifar10_challenge "Madry's CIFAR10 Challenge") so to them we give the credit.
+
+
+# Demo
 To train a new robust model for free! run the following command specifying the replay parameter `m`:
 
 ```bash
