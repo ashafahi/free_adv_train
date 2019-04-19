@@ -29,4 +29,4 @@ Alternatively, to install the requirements plus tensorflow for cpu run:
 pip install -r requirements/cpu.txt
 ```
 
-To prepare the data, please see [Datasets section](https://github.com/ashafahi/free_adv_train/datasets "Dataset readme")
+To prepare the data, please see [Datasets section](https://github.com/ashafahi/free_adv_train/tree/master/datasets "Dataset readme")
