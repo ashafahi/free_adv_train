@@ -4,7 +4,7 @@ def get_args():
     parser = configargparse.ArgParser(default_config_files=[])
     parser.add("--config", type=str, is_config_file=True, help="You can store all the config args in a config file and pass the path here")
     parser.add("--model_dir", type=str, default="models/model", help="Path to save/load the checkpoints, default=models/model")
-    parser.add("--datadir", type=str, default="datasets/", help="Path to load datasets from, default=datasets")
+    parser.add("--data_dir", type=str, default="datasets/", help="Path to load datasets from, default=datasets")
     parser.add("--dataset", "-d", type=str, default="cifar10", choices=["cifar10", "cifar100"], help="Path to load dataset, default=cifar10")
     parser.add("--tf_seed", type=int, default=451760341, help="Random seed for initializing tensor-flow variables to rule out the effect of randomness in experiments, default=45160341") 
     parser.add("--np_seed", type=int, default=216105420, help="Random seed for initializing numpy variables to rule out the effect of randomness in experiments, default=216105420") 
