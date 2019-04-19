@@ -261,3 +261,7 @@ dmypy.json
 
 # To avoid uploading datasets to the github
 datasets
+
+
+# SWP vim 
+.*.swp
