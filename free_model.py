@@ -117,8 +117,7 @@ class Model(object):
             return tf.contrib.layers.batch_norm(inputs=x, decay=.9, center=True, scale=True, activation_fn=None,
                                                 updates_collections=None, is_training=(self.mode == 'train'))
 
-    def _residual(self, x, in_filter, out_filter, stride,
-                  activate_before_residual=False):
+    def _residual(self, x, in_filter, out_filter, stride, activate_before_residual=False):
         """Residual unit with 2 sub layers."""
         if activate_before_residual:
             with tf.variable_scope('shared_activation'):
