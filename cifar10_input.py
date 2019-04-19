@@ -13,11 +13,10 @@ import pickle
 import sys
 import tensorflow as tf
 from tensorflow.examples.tutorials.mnist import input_data
-
-version = sys.version_info
-
 import numpy as np
 import re
+
+version = sys.version_info
 
 
 class CIFAR10Data(object):
@@ -39,8 +38,6 @@ class CIFAR10Data(object):
 
     def __init__(self, path):
         path = CIFAR10Data.rec_search(path)
-        import pdb
-        pdb.set_trace()
         train_filenames = ['data_batch_{}'.format(ii + 1) for ii in range(5)]
         eval_filename = 'test_batch'
         metadata_filename = 'batches.meta'

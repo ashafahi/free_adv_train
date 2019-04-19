@@ -1,2 +1,0 @@
-only-config: 'Ive been passed only in the config file' 
-both: 'Ive been passed in both ways, but im the config part'

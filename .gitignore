@@ -263,5 +263,9 @@ dmypy.json
 datasets
 
 
+# To avoid uploading models
+models
+
+
 # SWP vim 
 .*.swp
