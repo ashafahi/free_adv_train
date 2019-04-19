@@ -18,7 +18,8 @@ python multi_restart_pgd_attack.py --model_dir $MODEL_DIR --num_restarts 2
 
 
 ## Requirements 
-To install all the requirements plus tensorflow for multi-gpus run: 
+To install all the requirements plus tensorflow for multi-gpus run: (Inspired By [Illarion ikhlestov](https://github.com/ikhlestov/vision_networks "Densenet Implementation") ) 
+
 ```bash
 pip install -r requirements/gpu.txt
 ```
@@ -27,4 +28,5 @@ Alternatively, to install the requirements plus tensorflow for cpu run:
 ```bash
 pip install -r requirements/cpu.txt
 ```
-(Inspired by [Illarion ikhlestov](https://github.com/ikhlestov/vision_networks "Densenet Implementation") ) 
+
+To prepare the data, please see [Datasets section](https://github.com/ashafahi/free_adv_train/datasets "Dataset readme")
