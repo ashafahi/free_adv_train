@@ -7,14 +7,11 @@ import numpy as np
 import tensorflow as tf
 import json
 
-with open('config.json') as config_file:
-    config = json.load(config_file)
-
 
 class Model(object):
     """ResNet model."""
 
-    def __init__(self, mode):
+    def __init__(self, mode, dataset, train_batch_size=None):
         """ResNet constructor.
 
         Args:
@@ -24,6 +21,8 @@ class Model(object):
         self.y_pred = None
         self.mode = mode
         self.pert = True if mode == 'train' else False
+        self.num_classes = 100 if dataset == 'cifar100' else 10
+        self.train_batch_size = train_batch_size
         self._build_model()
 
     def add_internal_summaries(self):
@@ -46,7 +45,7 @@ class Model(object):
 
             if self.pert:
                 self.pert = tf.get_variable(name='instance_perturbation', initializer=tf.zeros_initializer,
-                                            shape=[config["training_batch_size"], 32, 32, 3], dtype=tf.float32,
+                                            shape=[self.train_batch_size, 32, 32, 3], dtype=tf.float32,
                                             trainable=True)
                 self.final_input = self.x_input + self.pert
                 self.final_input = tf.clip_by_value(self.final_input, 0., 255.)
@@ -96,7 +95,7 @@ class Model(object):
             self.neck = x
 
         with tf.variable_scope('logit'):
-            self.pre_softmax = self._fully_connected(x, 10)
+            self.pre_softmax = self._fully_connected(x, self.num_classes)
 
         self.predictions = tf.argmax(self.pre_softmax, 1)
         self.y_pred = self.predictions

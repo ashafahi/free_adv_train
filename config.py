@@ -27,7 +27,6 @@ def get_args():
     parser.add("--step_size", "-s", type=float, default=2.0, help="Step size in PGD attack for generating adversarial examples in each step, default=2.0")
     parser.add("--loss_func", "-f", type=str, default="xent", choices=["xent", "cw"], help="Loss function for the model, choices are [xent, cw], default=xent")
     parser.add("--num_restarts", type=int, default=1, help="Number of resets for the PGD attack, default=1")
-    parser.add("--train_examples", type=bool, default=False, help="Set True to train on adversarial examples, default=False")
     args = parser.parse_args()
     return args
 

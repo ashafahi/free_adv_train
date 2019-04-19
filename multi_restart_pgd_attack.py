@@ -12,8 +12,10 @@ import tensorflow as tf
 import numpy as np
 import sys
 import cifar10_input
+import cifar100_input
 import config
 from tqdm import tqdm
+import os
 
 config = config.get_args()
 _NUM_RESTARTS = config.num_restarts
@@ -63,6 +65,12 @@ class LinfPGDAttack:
 
         return x
 
+def get_path_dir(data_dir, dataset, **_):
+    path = os.path.join(data_dir, dataset)
+    if os.path.islink(path):
+        path = os.readlink(path)
+    return path
+
 
 if __name__ == '__main__':
     import sys
@@ -74,7 +82,11 @@ if __name__ == '__main__':
         print('No model found')
         sys.exit()
 
-    model = Model(mode='eval')
+    dataset = config.dataset
+    data_dir = config.data_dir
+    data_path = get_path_dir(data_dir, dataset)
+
+    model = Model(mode='eval', dataset=dataset)
     attack = LinfPGDAttack(model,
                            config.epsilon,
                            config.pgd_steps,
@@ -82,8 +94,11 @@ if __name__ == '__main__':
                            config.loss_func)
     saver = tf.train.Saver()
 
-    data_path = config.data_path
-    cifar = cifar10_input.CIFAR10Data(data_path)
+
+    if dataset == 'cifar10': 
+      cifar = cifar10_input.CIFAR10Data(data_path)
+    else:
+      cifar = cifar100_input.CIFAR100Data(data_path)
 
     with tf.Session() as sess:
         # Restore the checkpoint
@@ -146,8 +161,4 @@ if __name__ == '__main__':
 
             x_adv.append(best_batch_adv)
 
-        print('Storing examples')
-        path = config.store_adv_path
         x_adv = np.concatenate(x_adv, axis=0)
-        np.save(path, x_adv)
-        print('Examples stored in {}'.format(path))
