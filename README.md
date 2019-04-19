@@ -22,4 +22,4 @@ Alternatively, to install the requirements plus tensorflow for cpu run:
 ```bash
 pip install -r requirements/cpu.txt
 ```
-(Inspired by [Illarion ikhlestov](https://github.com/ikhlestov/vision_networks> "Densenet Implementation") ) 
+(Inspired by [Illarion ikhlestov](https://github.com/ikhlestov/vision_networks "Densenet Implementation") ) 
