@@ -1,5 +1,6 @@
 """
 Implementation of attack methods. Running this file as a program will
+evaluate the model and get the validation accuracy and then
 apply the attack to the model specified by the config file and store
 the examples in an .npy file.
 """
