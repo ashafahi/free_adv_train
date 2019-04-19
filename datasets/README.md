@@ -23,4 +23,4 @@ For instance use the following commands:
 ```bash
 ln -s PATH_TO_YOUR_CIFAR10_DATASET ./datasets/cifar10
 ```
-See [This Symbolic Link](https://kb.iu.edu/d/abbe "ln tutorail") for more info about Symbolic Links. 
+See [tutorail](https://kb.iu.edu/d/abbe "ln tutorail") for more info about Symbolic Links. 
