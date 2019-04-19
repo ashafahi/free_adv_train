@@ -43,18 +43,17 @@ class Model(object):
                 shape=[None, 32, 32, 3])
 
             self.y_input = tf.placeholder(tf.int64, shape=None)
-            
-            if self.pert:
-              self.pert = tf.get_variable(name='instance_perturbation',
-                   shape=[config["training_batch_size"],32,32,3], dtype=tf.float32, 
-                   initializer=tf.zeros_initializer, trainable=True)
-              self.final_input = self.x_input + self.pert
-              self.final_input = tf.clip_by_value(self.final_input, 0., 255.)
-            else:
-              self.final_input = self.x_input
 
-            input_standardized = tf.map_fn(lambda img: tf.image.per_image_standardization(img),
-                                           self.final_input)
+            if self.pert:
+                self.pert = tf.get_variable(name='instance_perturbation', initializer=tf.zeros_initializer,
+                                            shape=[config["training_batch_size"], 32, 32, 3], dtype=tf.float32,
+                                            trainable=True)
+                self.final_input = self.x_input + self.pert
+                self.final_input = tf.clip_by_value(self.final_input, 0., 255.)
+            else:
+                self.final_input = self.x_input
+
+            input_standardized = tf.map_fn(lambda img: tf.image.per_image_standardization(img), self.final_input)
             x = self._conv('init_conv', input_standardized, 3, 3, 16, self._stride_arr(1))
 
         strides = [1, 2, 2]
@@ -115,14 +114,8 @@ class Model(object):
     def _batch_norm(self, name, x):
         """Batch normalization."""
         with tf.name_scope(name):
-            return tf.contrib.layers.batch_norm(
-                inputs=x,
-                decay=.9,
-                center=True,
-                scale=True,
-                activation_fn=None,
-                updates_collections=None,
-                is_training=(self.mode == 'train'))
+            return tf.contrib.layers.batch_norm(inputs=x, decay=.9, center=True, scale=True, activation_fn=None,
+                                                updates_collections=None, is_training=(self.mode == 'train'))
 
     def _residual(self, x, in_filter, out_filter, stride,
                   activate_before_residual=False):
