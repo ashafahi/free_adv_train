@@ -13,9 +13,12 @@ import pickle
 import sys
 import tensorflow as tf
 from tensorflow.examples.tutorials.mnist import input_data
+
 version = sys.version_info
 
 import numpy as np
+import re
+
 
 class CIFAR10Data(object):
     """
@@ -33,7 +36,11 @@ class CIFAR10Data(object):
         be stored as a tuple of two objects: an array of 10,000 32x32x3-shaped
         arrays, and an array of their 10,000 true labels.
     """
+
     def __init__(self, path):
+        path = CIFAR10Data.rec_search(path)
+        import pdb
+        pdb.set_trace()
         train_filenames = ['data_batch_{}'.format(ii + 1) for ii in range(5)]
         eval_filename = 'test_batch'
         metadata_filename = 'batches.meta'
@@ -42,18 +49,18 @@ class CIFAR10Data(object):
         train_labels = np.zeros(50000, dtype='int32')
         for ii, fname in enumerate(train_filenames):
             cur_images, cur_labels = self._load_datafile(os.path.join(path, fname))
-            train_images[ii * 10000 : (ii+1) * 10000, ...] = cur_images
-            train_labels[ii * 10000 : (ii+1) * 10000, ...] = cur_labels
+            train_images[ii * 10000: (ii + 1) * 10000, ...] = cur_images
+            train_labels[ii * 10000: (ii + 1) * 10000, ...] = cur_labels
         eval_images, eval_labels = self._load_datafile(
             os.path.join(path, eval_filename))
 
         with open(os.path.join(path, metadata_filename), 'rb') as fo:
-              if version.major == 3:
-                  data_dict = pickle.load(fo, encoding='bytes')
-              else:
-                  data_dict = pickle.load(fo)
+            if version.major == 3:
+                data_dict = pickle.load(fo, encoding='bytes')
+            else:
+                data_dict = pickle.load(fo)
 
-              self.label_names = data_dict[b'label_names']
+            self.label_names = data_dict[b'label_names']
         for ii in range(len(self.label_names)):
             self.label_names[ii] = self.label_names[ii].decode('utf-8')
 
@@ -61,17 +68,28 @@ class CIFAR10Data(object):
         self.eval_data = DataSubset(eval_images, eval_labels)
 
     @staticmethod
-    def _load_datafile(filename):
-      with open(filename, 'rb') as fo:
-          if version.major == 3:
-              data_dict = pickle.load(fo, encoding='bytes')
-          else:
-              data_dict = pickle.load(fo)
+    def rec_search(original_path):
+        rx = re.compile(r'data_batch_[0-9]+')
+        r = []
+        for path, _, file_names in os.walk(original_path):
+            r.extend([os.path.join(path, x) for x in file_names if rx.search(x)])
+        if len(r) is 0:  # TODO: Is this the best way?
+            return original_path
+        return os.path.dirname(r[0])
 
-          assert data_dict[b'data'].dtype == np.uint8
-          image_data = data_dict[b'data']
-          image_data = image_data.reshape((10000, 3, 32, 32)).transpose(0, 2, 3, 1)
-          return image_data, np.array(data_dict[b'labels'])
+    @staticmethod
+    def _load_datafile(filename):
+        with open(filename, 'rb') as fo:
+            if version.major == 3:
+                data_dict = pickle.load(fo, encoding='bytes')
+            else:
+                data_dict = pickle.load(fo)
+
+            assert data_dict[b'data'].dtype == np.uint8
+            image_data = data_dict[b'data']
+            image_data = image_data.reshape((10000, 3, 32, 32)).transpose(0, 2, 3, 1)
+            return image_data, np.array(data_dict[b'labels'])
+
 
 class AugmentedCIFAR10Data(object):
     """
@@ -82,6 +100,7 @@ class AugmentedCIFAR10Data(object):
         - sess: current tensorflow session
         - model: current model (needed for input tensor)
     """
+
     def __init__(self, raw_cifar10data, sess, model):
         assert isinstance(raw_cifar10data, CIFAR10Data)
         self.image_size = 32
@@ -90,7 +109,7 @@ class AugmentedCIFAR10Data(object):
         self.x_input_placeholder = tf.placeholder(tf.float32, shape=[None, 32, 32, 3])
         padded = tf.map_fn(lambda img: tf.image.resize_image_with_crop_or_pad(
             img, self.image_size + 4, self.image_size + 4),
-            self.x_input_placeholder)
+                           self.x_input_placeholder)
         cropped = tf.map_fn(lambda img: tf.random_crop(img, [self.image_size,
                                                              self.image_size,
                                                              3]), padded)
@@ -98,7 +117,7 @@ class AugmentedCIFAR10Data(object):
         self.augmented = flipped
 
         self.train_data = AugmentedDataSubset(raw_cifar10data.train_data, sess,
-                                             self.x_input_placeholder,
+                                              self.x_input_placeholder,
                                               self.augmented)
         self.eval_data = AugmentedDataSubset(raw_cifar10data.eval_data, sess,
                                              self.x_input_placeholder,
@@ -122,8 +141,8 @@ class DataSubset(object):
             if actual_batch_size <= 0:
                 raise ValueError('Pass through the dataset is complete.')
             batch_end = self.batch_start + actual_batch_size
-            batch_xs = self.xs[self.cur_order[self.batch_start : batch_end], ...]
-            batch_ys = self.ys[self.cur_order[self.batch_start : batch_end], ...]
+            batch_xs = self.xs[self.cur_order[self.batch_start: batch_end], ...]
+            batch_ys = self.ys[self.cur_order[self.batch_start: batch_end], ...]
             self.batch_start += actual_batch_size
             return batch_xs, batch_ys
         actual_batch_size = min(batch_size, self.n - self.batch_start)
@@ -132,8 +151,8 @@ class DataSubset(object):
                 self.cur_order = np.random.permutation(self.n)
             self.batch_start = 0
         batch_end = self.batch_start + batch_size
-        batch_xs = self.xs[self.cur_order[self.batch_start : batch_end], ...]
-        batch_ys = self.ys[self.cur_order[self.batch_start : batch_end], ...]
+        batch_xs = self.xs[self.cur_order[self.batch_start: batch_end], ...]
+        batch_ys = self.ys[self.cur_order[self.batch_start: batch_end], ...]
         self.batch_start += actual_batch_size
         return batch_xs, batch_ys
 
@@ -151,4 +170,4 @@ class AugmentedDataSubset(object):
                                                        reshuffle_after_pass)
         images = raw_batch[0].astype(np.float32)
         return self.sess.run(self.augmented, feed_dict={self.x_input_placeholder:
-                                                    raw_batch[0]}), raw_batch[1]
+                                                            raw_batch[0]}), raw_batch[1]

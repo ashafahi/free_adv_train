@@ -1,4 +1,5 @@
 import configargparse
+import pdb
 
 def get_args():
     parser = configargparse.ArgParser(default_config_files=[])
@@ -33,6 +34,7 @@ def get_args():
 
 if __name__ == "__main__": 
     print(get_args())
+    pdb.set_trace()
 
 # TODO Default for model_dir
 # TODO Need to update the helps
