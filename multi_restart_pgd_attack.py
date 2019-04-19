@@ -10,57 +10,14 @@ from __future__ import print_function
 import tensorflow as tf
 import numpy as np
 import sys
-
 import cifar10_input
-_NUM_RESTARTS = 10
-class GaussianNoiseAugmentation:
-  def __init__(self, mean=0.0, std=8.0, random_start=True, do_clipping=False):
-    """Attack parameter initialization. The attack performs k steps of
-       size a, while always staying within epsilon from the initial
-       point."""
-    self.rand = random_start
-    self.mean = mean
-    self.std = std
-    self.do_clipping = do_clipping
-
-  def perturb(self, x_nat):
-    """Given a set of examples (x_nat, y), returns a set of adversarial
-       examples within epsilon of x_nat in l_infinity norm."""
-    if self.rand:
-      x = x_nat + np.random.normal(self.mean, self.std, x_nat.shape)#np.random.uniform(-self.epsilon, self.epsilon, x_nat.shape)
-    else:
-      x = np.copy(x_nat)
-
-    if self.do_clipping:
-      x = np.clip(x, 0, 255) # ensure valid pixel range
-
-    return x
-
-class UniformNoiseAugmentation:
-  def __init__(self, size=8.0, random_start=True, do_clipping=False):
-    """Attack parameter initialization. The attack performs k steps of
-       size a, while always staying within epsilon from the initial
-       point."""
-    self.rand = random_start
-    self.size = size
-    self.do_clipping = do_clipping
-
-  def perturb(self, x_nat):
-    """Given a set of examples (x_nat, y), returns a set of adversarial
-       examples within epsilon of x_nat in l_infinity norm."""
-    if self.rand:
-      x = x_nat + np.random.uniform(-self.size, self.size, x_nat.shape)
-    else:
-      x = np.copy(x_nat)
-
-    if self.do_clipping:
-      x = np.clip(x, 0, 255) # ensure valid pixel range
-
-    return x
-
+import config
+from tqdm import tqdm
+config = config.get_args()
+_NUM_RESTARTS = config.num_restarts
 
 class LinfPGDAttack:
-  def __init__(self, model, epsilon, num_steps, step_size, random_start, loss_func):
+  def __init__(self, model, epsilon, num_steps, step_size, loss_func):
     """Attack parameter initialization. The attack performs k steps of
        size a, while always staying within epsilon from the initial
        point."""
@@ -68,7 +25,6 @@ class LinfPGDAttack:
     self.epsilon = epsilon
     self.num_steps = num_steps
     self.step_size = step_size
-    self.rand = random_start
 
     if loss_func == 'xent':
       loss = model.xent
@@ -87,15 +43,11 @@ class LinfPGDAttack:
 
     self.grad = tf.gradients(loss, model.x_input)[0]
 
-  def perturb(self, x_nat, y, sess, clip_after_rand=True):
+  def perturb(self, x_nat, y, sess):
     """Given a set of examples (x_nat, y), returns a set of adversarial
        examples within epsilon of x_nat in l_infinity norm."""
-    if self.rand:
-      x = x_nat + np.random.uniform(-self.epsilon, self.epsilon, x_nat.shape)
-      if clip_after_rand:
-        x = np.clip(x,0,255)
-    else:
-      x = np.copy(x_nat)
+    x = x_nat + np.random.uniform(-self.epsilon, self.epsilon, x_nat.shape)
+    x = np.clip(x,0,255)
 
     for i in range(self.num_steps):
       grad = sess.run(self.grad, feed_dict={self.model.x_input: x,
@@ -110,31 +62,24 @@ class LinfPGDAttack:
 
 
 if __name__ == '__main__':
-  import json
   import sys
   import math
+  from free_model import Model
 
-
-  from model import Model
-
-  with open('config.json') as config_file:
-    config = json.load(config_file)
-
-  model_file = tf.train.latest_checkpoint(config['model_dir'])
+  model_file = tf.train.latest_checkpoint(config.model_dir)
   if model_file is None:
     print('No model found')
     sys.exit()
 
   model = Model(mode='eval')
   attack = LinfPGDAttack(model,
-                         config['epsilon'],
-                         config['num_steps'],
-                         config['step_size'],
-                         config['random_start'],
-                         config['loss_func'])
+                         config.epsilon,
+                         config.pgd_steps,
+                         config.step_size,
+                         config.loss_func)
   saver = tf.train.Saver()
 
-  data_path = config['data_path']
+  data_path = config.data_path
   cifar = cifar10_input.CIFAR10Data(data_path)
 
   with tf.Session() as sess:
@@ -142,29 +87,39 @@ if __name__ == '__main__':
     saver.restore(sess, model_file)
 
     # Iterate over the samples batch-by-batch
-    num_eval_examples = config['num_eval_examples']
-    eval_batch_size = config['eval_batch_size']
+    num_eval_examples = config.eval_examples
+    eval_batch_size = config.eval_size
     num_batches = int(math.ceil(num_eval_examples / eval_batch_size))
 
     x_adv = [] # adv accumulator
 
+    print('getting clean validation accuracy')
+    total_corr = 0
+    for ibatch in tqdm(range(num_batches)):
+      bstart = ibatch * eval_batch_size
+      bend = min(bstart + eval_batch_size, num_eval_examples)
+
+      x_batch = cifar.eval_data.xs[bstart:bend, :].astype(np.float32)
+      y_batch = cifar.eval_data.ys[bstart:bend]
+
+      dict_val = {model.x_input:x_batch , model.y_input:y_batch}
+      cur_corr = sess.run(model.num_correct,feed_dict=dict_val)
+      total_corr += cur_corr
+    print('** validation accuracy: %.3f **\n\n'%(total_corr/float(num_eval_examples)*100))
+
     print('Iterating over {} batches'.format(num_batches))
 
-    _TRAINING_EXAMPLES = config['train_examples']
-    total_corr = 0
+    total_corr, total_num = 0, 0
     for ibatch in range(num_batches):
       bstart = ibatch * eval_batch_size
       bend = min(bstart + eval_batch_size, num_eval_examples)
-      print('batch size: {}'.format(bend - bstart))
-      print('%d out of %d'%(ibatch, num_batches))
+      curr_num = bend - bstart
+      total_num += curr_num
+      print('mini batch: {}/{} -- batch size: {}'.format(ibatch+1, num_batches,curr_num))
       sys.stdout.flush()
 
-      if _TRAINING_EXAMPLES:
-        x_batch = cifar.train_data.xs[bstart:bend,:].astype(np.float32)
-        y_batch = cifar.train_data.ys[bstart:bend]
-      else:
-        x_batch = cifar.eval_data.xs[bstart:bend, :].astype(np.float32)
-        y_batch = cifar.eval_data.ys[bstart:bend]
+      x_batch = cifar.eval_data.xs[bstart:bend, :].astype(np.float32)
+      y_batch = cifar.eval_data.ys[bstart:bend]
 
       best_batch_adv = np.copy(x_batch)
       dict_adv = {model.x_input:best_batch_adv , model.y_input:y_batch}
@@ -175,25 +130,21 @@ if __name__ == '__main__':
         dict_adv = {model.x_input:x_batch_adv , model.y_input:y_batch}
         cur_corr, y_pred_batch, this_loss = sess.run([model.num_correct, model.predictions, model.y_xent],
                                               feed_dict=dict_adv)
-        #best_batch_adv = np.vstack((best_batch_adv[best_loss >= this_loss],x_batch_adv[this_loss > best_loss]))
         bb = best_loss >= this_loss
         bw = best_loss < this_loss
-        #best_batch_adv[bb] = best_batch_adv[bb]
         best_batch_adv[bw,:,:,:] = x_batch_adv[bw,:,:,:]
         
-        print(best_batch_adv.mean(),(best_batch_adv-x_batch).max(),(best_batch_adv-x_batch).min())
-        #best_batch_adv = x_batch_adv
         best_corr, y_pred_batch, best_loss = sess.run([model.num_correct, model.predictions, model.y_xent],
                                               feed_dict={model.x_input: best_batch_adv, model.y_input:y_batch})
         print('restart %d: num correct: %d -- loss:%.4f'%(ri,best_corr,np.mean(best_loss)))
       total_corr += best_corr
-      print('accyracy till now %.4f'%(float(total_corr)/((ibatch+1)*eval_batch_size)))
+      print('accuracy till now {:4}% \n\n'.format(float(total_corr)/total_num*100))
       
 
       x_adv.append(best_batch_adv)
 
     print('Storing examples')
-    path = config['store_adv_path']
+    path = config.store_adv_path
     x_adv = np.concatenate(x_adv, axis=0)
     np.save(path, x_adv)
     print('Examples stored in {}'.format(path))

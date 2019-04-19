@@ -14,7 +14,7 @@ with open('config.json') as config_file:
 class Model(object):
     """ResNet model."""
 
-    def __init__(self, mode, pert=True):
+    def __init__(self, mode):
         """ResNet constructor.
 
         Args:
@@ -23,7 +23,7 @@ class Model(object):
         self.neck = None
         self.y_pred = None
         self.mode = mode
-        self.pert = pert
+        self.pert = True if mode == 'train' else False
         self._build_model()
 
     def add_internal_summaries(self):

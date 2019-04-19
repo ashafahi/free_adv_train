@@ -21,11 +21,6 @@
   "step_size_schedule": [[0, 0.1], [40000, 0.01], [60000, 0.001]],
   "weight_decay": 0.0002,
   "momentum": 0.9,
-  "std_rand": 0.0,
-  "xent_clip": 0.0,
-  "size_uniform": 0.0,
-  "label_smoothing": 0.0,
-  "reset_perturbation": false,
   "num_steps_skip": 8,
 
   "_comment": "===== EVAL CONFIGURATION =====",
