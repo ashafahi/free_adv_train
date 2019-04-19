@@ -18,9 +18,6 @@ import pdb
 
 import config
 
-args = config.get_args()
-
-
 def get_path_dir(data_dir, dataset, **_):
     path = os.path.join(data_dir, dataset)
     if os.path.islink(path):
@@ -78,8 +75,7 @@ def train(tf_seed, np_seed, train_steps, out_steps, summary_steps, checkpoint_st
 
     gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=1.0)
     with tf.Session(config=tf.ConfigProto(gpu_options=gpu_options)) as sess:
-        print(
-            '\n\n************ free training for epsilon=%.1f using m_replay=%d *************\n\n' % (epsilon, replay_m))
+        print('\n\n********** free training for epsilon=%.1f using m_replay=%d **********\n\n' % (epsilon, replay_m))
         # initialize data augmentation
         data = cifar10_input.AugmentedCIFAR10Data(raw_data, sess, model)
 
@@ -92,15 +88,11 @@ def train(tf_seed, np_seed, train_steps, out_steps, summary_steps, checkpoint_st
         for ii in range(train_steps):
             if ii % replay_m == 0:
                 x_batch, y_batch = data.train_data.get_next_batch(train_batch_size, multiple_passes=True)
+                nat_dict = {model.x_input: x_batch, model.y_input: y_batch}
 
-                nat_dict = {model.x_input: x_batch,
-                            model.y_input: y_batch}
+            x_eval_batch, y_eval_batch = data.eval_data.get_next_batch(train_batch_size, multiple_passes=True)
+            eval_dict = {model.x_input: x_eval_batch, model.y_input: y_eval_batch}
 
-            x_eval_batch, y_eval_batch = data.eval_data.get_next_batch(train_batch_size,
-                                                                        multiple_passes=True)
-
-            eval_dict = {model.x_input: x_eval_batch,
-                         model.y_input: y_eval_batch}
             # Output to stdout
             if ii % summary_steps == 0:
                 train_acc, summary = sess.run([model.accuracy, merged_summaries], feed_dict=nat_dict)
@@ -119,13 +111,12 @@ def train(tf_seed, np_seed, train_steps, out_steps, summary_steps, checkpoint_st
 
             # Write a checkpoint
             if ii % checkpoint_steps == 0:
-                saver.save(sess,
-                           os.path.join(model_dir, 'checkpoint'),
-                           global_step=global_step)
+                saver.save(sess, os.path.join(model_dir, 'checkpoint'), global_step=global_step)
 
             # Actual training step
             sess.run(min_step, feed_dict=nat_dict)
 
 
 if __name__ == '__main__':
+    args = config.get_args()
     train(**vars(args))
