@@ -79,8 +79,8 @@ def train(tf_seed, np_seed, train_steps, out_steps, summary_steps, checkpoint_st
         print('\n\n********** free training for epsilon=%.1f using m_replay=%d **********\n\n' % (epsilon, replay_m))
         print('important params >>> \n model dir: %s \n dataset: %s \n training batch size: %d \n' % (model_dir, dataset, train_batch_size))
         if dataset == 'cifar100':
-          print('the ride for CIFAR100 is bumpy -- fasten your seatbelts! \n   
-                you will probably see the training and validation accuracy fluctuating a lot early in trainnig \n  
+          print('the ride for CIFAR100 is bumpy -- fasten your seatbelts! \n \
+          you will probably see the training and validation accuracy fluctuating a lot early in trainnig \n \
                 this is natural especially for large replay_m values because we see that mini-batch so many times.')
         # initialize data augmentation
         if dataset == 'cifar10':
