@@ -1,6 +1,9 @@
 import configargparse
 import pdb
 
+def pair(arg):
+    return [float(x) for x in arg.split(',')]
+
 def get_args():
     parser = configargparse.ArgParser(default_config_files=[])
     parser.add("--config", type=str, is_config_file=True, help="You can store all the config args in a config file and pass the path here")
@@ -14,7 +17,7 @@ def get_args():
     parser.add("--summary_steps", type=int, default=500, help="Number of summary steps, default=500") 
     parser.add("--checkpoint_steps", "-c", type=int, default=1000, help="Number of checkpoint steps, default=1000")
     parser.add("--train_batch_size", "-b", type=int, default=128, help="The training batch size, default=128")
-    parser.add("--step_size_schedule", default=[[0, 0.1], [40000, 0.01], [60000, 0.001]], help="The step size scheduling, default=[[0, 0.1], [40000, 0.01], [60000, 0.001]]") 
+    parser.add("--step_size_schedule", nargs='+', type=pair, default=[[0, 0.1], [40000, 0.01], [60000, 0.001]], help="The step size scheduling, default=[[0, 0.1], [40000, 0.01], [60000, 0.001]], use like: --stepsize 0,0.1 40000,0.01 60000,0.001") 
     parser.add("--weight_decay", "-w", type=float, default=0.0002, help="The weight decay parameter, default=0.0002")
     parser.add("--momentum", type=float, default=0.9, help="The momentum parameter, default=0.9")
     parser.add("--replay_m", "-m", type=int, default=8, help="Number of steps to repeat trainig on the same batch, default=8")
