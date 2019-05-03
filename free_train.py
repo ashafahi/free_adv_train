@@ -119,7 +119,7 @@ def train(tf_seed, np_seed, train_steps, out_steps, summary_steps, checkpoint_st
                 print('    training nat accuracy {:.4}%'.format(nat_acc * 100))
 
             # Write a checkpoint
-            if ii % checkpoint_steps == 0:
+            if (ii+1) % checkpoint_steps == 0:
                 saver.save(sess, os.path.join(model_dir, 'checkpoint'), global_step=global_step)
 
             # Actual training step
