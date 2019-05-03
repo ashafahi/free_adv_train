@@ -1,5 +1,5 @@
 # Free Adversarial Training 
-This repository belongs to the [Free Adversarial Training](http://arxiv.org/ "Free Adversarial Training") paper.
+This repository belongs to the [Free Adversarial Training](https://arxiv.org/abs/1904.12843 "Free Adversarial Training") paper.
 The implementation is inspired by [CIFAR10 Adversarial Example Challenge](https://github.com/MadryLab/cifar10_challenge "Madry's CIFAR10 Challenge") so to them we give the credit.
 
 
@@ -15,7 +15,7 @@ To evaluate a robust model using PGD-20 with 2 random restarts run:
 ```bash
 python multi_restart_pgd_attack.py --model_dir $MODEL_DIR --num_restarts 2
 ```
-Note that if you have trained a CIFAR-100 model, even for evaluation, you should pass the dataset argument. For examples:
+Note that if you have trained a CIFAR-100 model, even for evaluation, you should pass the dataset argument. For example:
 ```bash
 python multi_restart_pgd_attack.py --model_dir $MODEL_DIR_TO_CIFAR100 --num_restarts 2 -d cifar100
 ```
